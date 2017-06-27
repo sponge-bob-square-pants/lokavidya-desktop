@@ -1,4 +1,4 @@
-package ScreenRecorder;
+package SynchronousAudioVideoCapture;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package ScreenRecorder;
+package SynchronousAudioVideoCapture;
 
 import java.awt.Toolkit;
 import java.awt.Dimension;
@@ -26,14 +26,13 @@ public class AvconvWrapper {
 	private boolean mReadyForRecording;
 	private boolean mIsRecording;
 	
-	public AvconvWrapper(String videoPath, String videoName, int startingX, int startingY, int width, int height){
+	public AvconvWrapper(String videoPath, int frameRate, int startingX, int startingY, int width, int height){
 		mPathExecutable = GeneralUtils.findAvconvPath();
-		mVideoURL = new File(videoPath, videoName + ".mp4").getAbsolutePath();
+		mVideoURL = videoPath;
 		System.out.println("video url : " + mVideoURL);
 		
 		mWidth = width;
 		mHeight = height;
-		mScreenSize = ((int) mWidth) + "x" + ((int) mHeight);
 		
 		// delete a previous copy of the video, if it exists
 		if (new File(mVideoURL).exists()){
@@ -51,11 +50,11 @@ public class AvconvWrapper {
 					"-f",
 					"x11grab", 
 					"-r", 
-					"3", 
+					"" + frameRate, 
 					"-s", 
-					mScreenSize, 
+					((int) mWidth) + "x" + ((int) mHeight), 
 					"-i", 
-					":0.0+0,0", 
+					":0.0+" + startingX + "," + startingY, 
 					"-acodec", 
 					"aac", 
 					"-vcodec",
@@ -74,8 +73,8 @@ public class AvconvWrapper {
 		}
 	}
 	
-	public AvconvWrapper(String videoPath, String videoName) {
-		this(videoPath, videoName, 0, 0, getScreenWidth(), getScreenHeight());
+	public AvconvWrapper(String videoPath) {
+		this(videoPath, 3, 0, 0, getScreenWidth(), getScreenHeight());
 	}
 	
 	public static int getScreenWidth() {
@@ -103,11 +102,14 @@ public class AvconvWrapper {
 		if(mIsRecording) {
 			return runProcess.stop();
 		} return true;
-		
+	}
+	
+	public boolean isRecording() {
+		return mIsRecording;
 	}
 	
 	public static void main(String[] args) {
-		AvconvWrapper avconvWrapper = new AvconvWrapper("/home/ironstein/Desktop", "abcdefgh");
+		AvconvWrapper avconvWrapper = new AvconvWrapper("/home/ironstein/Desktop/abcdefgh.mp4");
 		System.out.println("starting recording : " + avconvWrapper.startRecordingScreen());
 		try {
 			Thread.sleep(60000);
