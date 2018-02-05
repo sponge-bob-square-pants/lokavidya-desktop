@@ -493,8 +493,9 @@ public class Workspace extends JFrame implements WindowListener, WindowFocusList
 		System.out.println("Resetting coordinates");
 		x = 0;
 		y = 0;
-		recordingWidth = 0;
-		recordingHeight = 0;
+		Dimension screenDimensions = Toolkit.getDefaultToolkit().getScreenSize();
+		recordingWidth = (int) screenDimensions.getWidth();
+		recordingHeight = (int) screenDimensions.getHeight();
 	}
 
 	public void setinitialDragID(int initialDragID) {
@@ -1115,6 +1116,7 @@ public class Workspace extends JFrame implements WindowListener, WindowFocusList
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Toolkit t = getToolkit();
 
+		resetCoordinates();
 		margin = 10;
 		height = (int) t.getScreenSize().getHeight();
 		height = height - scnMax.bottom - scnMax.top;

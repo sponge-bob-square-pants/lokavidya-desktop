@@ -29,6 +29,7 @@ public class AvconvWrapper {
 	public AvconvWrapper(String videoPath, int frameRate, int startingX, int startingY, int width, int height){
 		mPathExecutable = GeneralUtils.findAvconvPath();
 		mVideoURL = videoPath;
+		mIsRecording = false;
 		System.out.println("video url : " + mVideoURL);
 		
 		mWidth = width;
@@ -41,7 +42,7 @@ public class AvconvWrapper {
 		
 		if (System.getProperty("os.name").contains("Linux")) {
 			// Linux
-			// avconv -y -f alsa -i pulse -f x11grab -r 3 -s 1280x720 -i :0.0+0,0 -acodec aac -vcodec libx264 -threads 0 Desktop/video.mkv
+			// avconv -y -f alsa -i pulse -f x11grab -r 3 -s 1280x720 -i :0.0+0,0 -acodec aac -vcodec libx264 -threads 0 -pix_fmt yuva420p Desktop/video.mkv
 			mCommand = new String[] {
 					mPathExecutable, 
 					"-y", 
@@ -61,6 +62,8 @@ public class AvconvWrapper {
 					"libx264", 
 					"-threads", 
 					"0", 
+					"-pix_fmt",
+					"yuva420p",
 					mVideoURL
 			};
 			mReadyForRecording = true;
@@ -100,7 +103,7 @@ public class AvconvWrapper {
 	// this method can be called from the listener when the user presses the button to stop recording
 	public boolean stopRecordingScreen(){
 		if(mIsRecording) {
-			return runProcess.stop();
+			return runProcess.stopWithExitValue();
 		} return true;
 	}
 	

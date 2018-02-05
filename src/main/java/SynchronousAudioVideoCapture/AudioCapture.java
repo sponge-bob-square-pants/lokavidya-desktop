@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -155,7 +156,9 @@ public class AudioCapture implements Runnable {
 		for(int i=0; i<20; i++) {
 			randomString += RandomUtils.nextInt();
 		}
-		String newAudioFilePath = FilenameUtils.removeExtension(mAudioFilePath) + RandomUtils.nextInt() + randomString + ".wav";
+		String newAudioFilePath = FilenameUtils.removeExtension(mAudioFilePath) + RandomUtils.nextInt() + randomString + ".mp3";
+		mAudioFilePath = new File(mAudioFilePath).getAbsolutePath();
+		newAudioFilePath = new File(newAudioFilePath).getAbsolutePath();
 		String[] command = new String[] {
 				wrapper.pathExecutable,
 				"-i",
@@ -166,10 +169,11 @@ public class AudioCapture implements Runnable {
 				"2",
 				newAudioFilePath
 		};
+		
 		GeneralUtils.runProcess(command);
 		
 		new File(mAudioFilePath).delete();
-		new File(newAudioFilePath).renameTo(new File(mAudioFilePath));
+		new File(newAudioFilePath).renameTo(new File(FilenameUtils.removeExtension(mAudioFilePath)+".mp3"));
 	}
 	
 }

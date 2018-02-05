@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 
 import Xuggler.DecodeAndSaveAudioVideo;
@@ -134,7 +136,6 @@ public class ProjectOperations {
 		segment=segmentA;
 		tempAudioURL=new File(project.getProjectURL(),(RandomStringUtils.randomAlphanumeric(10).toLowerCase()+".wav")).getAbsolutePath();
 		tempVideoURL=new File((RandomStringUtils.randomAlphanumeric(10).toLowerCase()+".flv")).getAbsolutePath();
-
 		try {
 			currentCapture = new SynchronousAudioVideoCapture(tempAudioURL, tempVideoURL);
 			currentCapture.startRecording();
@@ -142,7 +143,6 @@ public class ProjectOperations {
 			// TODO show dialogue (could not start recording)
 			e.printStackTrace();
 		}
-
 	}
 
 	public static void playSlideRecording() {
@@ -194,7 +194,7 @@ public class ProjectOperations {
 		// Since the "currentCapture.stopRecording()" method will take a lot of time
 		// After the stack thingy is implemented
 		currentCapture.stopRecording();
-        segment.getSlide().setTempAudioURL(tempAudioURL);
+        segment.getSlide().setTempAudioURL(FilenameUtils.removeExtension(tempAudioURL)+".mp3");
         segment.getSlide().setTempMuteVideoURL(tempVideoURL); 
 	}
 
@@ -212,14 +212,14 @@ public class ProjectOperations {
 					// stitching audio and video files, and generating a flv file as output
 					File tempVideo = new File(project.getProjectURL(), RandomStringUtils.randomAlphanumeric(10).toLowerCase()+".flv");
 					System.out.println("tempVideo : Saving at : " + tempVideo.getAbsolutePath());
-					DecodeAndSaveAudioVideo.stitch(originalTempVideo.getAbsolutePath(),s.getSlide().getTempAudioURL(),tempVideo.getAbsolutePath());
+					DecodeAndSaveAudioVideo.stitch(originalTempVideo.getAbsolutePath(),new File(s.getSlide().getTempAudioURL()).getAbsolutePath(),tempVideo.getAbsolutePath());
 					
 					// converting tempVideo, and saving it to globalVideo.getVideoURL() path
 					// ffmpeg -i inputVideo.flv -c:v libxvid -c:a aac -strict experimental outputVideo.mp4
 					globalVideo = new Video(project.getProjectURL());
 					System.out.println("converting " + tempVideo.getAbsolutePath() + " to " + globalVideo.getVideoURL());
 					FFMPEGWrapper wrapper = new FFMPEGWrapper();
-					String tmpVideoPath = new File(System.getProperty("java.io.tmpdir"), "tempVideoBeforeSaving.mp4").getAbsolutePath();
+					String tmpVideoPath = new File(System.getProperty("java.io.tmpdir"), "tempVideoBeforeSaving.flv").getAbsolutePath();
 					
 					String[] command;
 					

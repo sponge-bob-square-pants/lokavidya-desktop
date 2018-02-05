@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
@@ -73,8 +74,8 @@ public class FFMPEGWrapper {
 		pathExecutable = new File(new File(new File("lib").getAbsolutePath(), "ffmpeg").getAbsolutePath(), "bin")
 				.getAbsolutePath();
 		pathExecutableffprobe = pathExecutable;
-		encoding = "libxvid";
-//		encoding = "libx264";
+//		encoding = "libxvid";
+		encoding = "libx264";
 		
 		String osPathString;
 
@@ -86,7 +87,7 @@ public class FFMPEGWrapper {
 			System.out.println("Setting to Mac");
 			osPathString = "macosx";
 			// set encoding to libx264, only for mac
-			encoding = "libx264";
+			//encoding = "libx264";
 		} else {
 			if (System.getProperty("sun.arch.data.model").contains("32")) {
 				System.out.println("Setting to Linux 32");
@@ -167,6 +168,14 @@ public class FFMPEGWrapper {
 			System.out.println(videoPaths.get(i));
 		}
 		
+		System.out.println("videos are already in libx264 codec");
+		String videoPath1 = videoPaths.get(0);
+		String videoFileName1 = FilenameUtils.getBaseName(videoPath1);
+		String extension1 = FilenameUtils.getExtension(videoPath1);
+		String path = videoPath1.substring(0, videoPath1.length() - videoFileName1.length() - extension1.length() - 1);
+		
+		//COMMENTING OUT BECAUSE ALL VIDEOS ARE ALREADY ENCODED IN libx264
+		/*
 		String path = "";
 		// re-encode the videos to libx264 codec
 		// ffmpeg -i input1.mp4 -c:v libx264 -preset slow -crf 22 -c:a copy output1.mp4
@@ -202,17 +211,22 @@ public class FFMPEGWrapper {
 			libx264_filenames.add(libx264_fileName);
 		}
 		
+		System.out.println(libx264_filenames);
+		*/
+		
+		System.out.println("convert the libx264 encoded videos to intermediate mpg videos");
+		
 		// convert the libx264 encoded videos to intermediate mpg videos
 		// ffmpeg -i output1.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts inter1.ts
 		// ffmpeg -i output2.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts inter2.ts
 		ArrayList<String> interFilesList = new ArrayList<String>();
-		for(int i=0; i<libx264_filenames.size(); i++) {
+		for(int i=0; i<videoPaths.size(); i++) {
 			String interFile = new File(path, "inter" + i + ".ts").getAbsolutePath();
 			String[] command = new String[] {
 					pathExecutable,
 					"-y",
 					"-i",
-					libx264_filenames.get(i),
+					videoPaths.get(i),
 					"-c",
 					"copy",
 					"-bsf:v",
@@ -227,10 +241,10 @@ public class FFMPEGWrapper {
 			GeneralUtils.runProcess(command);
 			interFilesList.add(interFile);
 		}
-		
+		System.out.println(interFilesList);
+		System.out.println("concatenate the two videos to generate output video");
 		// concatenate the two videos to generate output video
 		// ffmpeg -i "concat:inter1.ts|inter2.ts" -c copy -bsf:a aac_adtstoasc output.mp4		
-		
 		String osName = System.getProperty("os.name");
 		String concatFilesString;
 		if(osName.contains("Windows")) {
@@ -246,8 +260,9 @@ public class FFMPEGWrapper {
 			concatFilesString = concatFilesString.substring(0, concatFilesString.length()-1);
 			concatFilesString += "\"";
 		} else {
+			//TODO: fix concatFilesString back to no '"'s
 			concatFilesString = "concat:";
-			for(int i=0; i<interFilesList.size(); i++) {
+			for(int i=0; i<videoPaths.size(); i++) {
 				concatFilesString += interFilesList.get(i) + "|";
 			}
 			
@@ -258,6 +273,8 @@ public class FFMPEGWrapper {
 			concatFilesString = concatFilesString.substring(0, concatFilesString.length()-1);
 			concatFilesString += "";
 		}
+		
+		String finalF4vPath = new File(FilenameUtils.removeExtension(finalPath)+".f4v").getAbsolutePath();
 		
 		String[] command = new String[] {
 				pathExecutable,
@@ -270,14 +287,30 @@ public class FFMPEGWrapper {
 				"aac_adtstoasc",
 				"-qscale",
 				"1",
-				finalPath
+				finalF4vPath
 		};
 		for(int j=0; j<command.length; j++) {
 			System.out.print(command[j] + " ");
 		}
 		GeneralUtils.runProcess(command);
 		
-		if(encoding.equals("libxvid")) {
+		System.out.println("converting f4v to flv");
+		//converting f4v to flv format
+		//ffmpeg -i input.f4v output.flv
+		command = new String[] {
+				pathExecutable,
+				"-y",
+				"-i",
+				finalF4vPath,
+				finalPath
+		};
+		for(int j=0; j<command.length; j++){
+			System.out.print(command[j] + " ");
+		}
+		GeneralUtils.runProcess(command);
+		
+		
+		/*if(encoding.equals("libxvid")) {
 			String oldFinalPath = finalPath;
 			finalPath = new File(FilenameUtils.getFullPath(oldFinalPath), FilenameUtils.getBaseName(oldFinalPath)).getAbsolutePath() + "_final." + FilenameUtils.getExtension(oldFinalPath);
 			command = new String[] {
@@ -299,11 +332,12 @@ public class FFMPEGWrapper {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		
-		// delete intermediate files
-		for(int i=0; i<libx264_filenames.size(); i++) {
-			new File(libx264_filenames.get(i)).delete();
+		System.out.println("delete intermediate files");
+		//delete intermediate files
+		for(int i=0; i<videoPaths.size(); i++) {
+			new File(videoPaths.get(i)).delete();
 		}
 		
 		for(int i=0; i<interFilesList.size(); i++) {
@@ -326,23 +360,26 @@ public class FFMPEGWrapper {
 		if (file.exists())
 			file.delete();
 
+		
+		System.out.println("return false if the audio process did not run");
 		String[] commandAudio = new String[] { pathExecutable, "-i", videoPath, tempAudioOutput };
 		cont = GeneralUtils.runProcess(commandAudio);
 		if(!cont) {
 			return false;
 		}
 		
+		
 		String tempVideoOutput = new File(tmpPath, "tempVideo.mp4").getAbsolutePath();
 		file = new File(tempVideoOutput);
 		if (file.exists())
 			file.delete();
+		System.out.println("return false if the video process did not run");
 		String[] commandVideo = new String[] { pathExecutable, "-i", videoPath, "-vcodec", "copy", "-an",
 				tempVideoOutput };
 		cont = GeneralUtils.runProcess(commandVideo);
 		if(!cont) {
 			return false;
 		}
-		
 		
 		String[] commandVideoCombine = new String[] { pathExecutable, "-i", tempAudioOutput, "-i", tempVideoOutput,
 				"-ar", "44100", "-vcodec", "copy", "-strict", "-2", videoPath };

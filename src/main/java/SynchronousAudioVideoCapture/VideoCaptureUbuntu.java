@@ -2,6 +2,7 @@ package SynchronousAudioVideoCapture;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import com.iitb.lokavidya.core.utils.FFMPEGWrapper;
 import com.iitb.lokavidya.core.utils.RandomStringUtils;
@@ -25,9 +26,10 @@ public class VideoCaptureUbuntu extends VideoCapture {
 		mFrameRate = videoFrameRate;
 		mCapture = capture;
 		mTempFiles = new ArrayList<String>();
-		mCurrentTempFile = getNewTempFile("mp4");
+		mCurrentTempFile = getNewTempFile("f4v");
 		mIsBusy = false;
 		mFfmpegWrapper = new FFMPEGWrapper();
+		mAvconvWrapper = new AvconvWrapper(videoPath);
 	}
 	
 	public String getNewTempFile(String extension) {
@@ -49,8 +51,23 @@ public class VideoCaptureUbuntu extends VideoCapture {
 	@Override
 	public void stop() {
 		mIsBusy = true;
+		pause();
+		System.out.println("Avconv recording stopped");
 		mFfmpegWrapper.stitchVideo(mTempFiles, getNewTempFile("txt"), mVideoPath);
 		mIsBusy = false;
+	}
+	
+	public void pause(){
+		//PAUSED
+		System.out.println("videoCapture pausing");
+		// cancel schedule for next call
+		mCapture.getVideoCaptureScheduler().cancel(true);
+		// stop screen recording
+		mAvconvWrapper.stopRecordingScreen();
+		// add the current temp file name to array
+		mTempFiles.add(mCurrentTempFile);
+		// create a new temp file
+		mCurrentTempFile = getNewTempFile("f4v");
 	}
 
 	@Override
@@ -58,16 +75,7 @@ public class VideoCaptureUbuntu extends VideoCapture {
 		System.out.println("VideoCaptureUbuntu : run : called");
 		
 		if(mCapture.getState() == SynchronousAudioVideoCapture.States.PAUSED) {
-			// PAUSED
-			System.out.println("videoCapture pausing");
-			// cancel schedule for the next call
-			mCapture.getVideoCaptureScheduler().cancel(true);
-			// stop screen recording
-			mAvconvWrapper.stopRecordingScreen();
-			// add the current temp file name to array
-			mTempFiles.add(mCurrentTempFile);
-			// create a new temp file
-			mCurrentTempFile = getNewTempFile("mp4");
+			pause();
 			System.out.println("new temp file : " + mCurrentTempFile);
 		} else {
 			System.out.println("videoCapture not pausing");

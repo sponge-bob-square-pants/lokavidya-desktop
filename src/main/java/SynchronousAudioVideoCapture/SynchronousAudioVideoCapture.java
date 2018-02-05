@@ -151,7 +151,6 @@ public class SynchronousAudioVideoCapture {
 		DEFAULT_VIDEO_FRAME_RATE = Call.workspace.framerate;
 		mVideoCapture.setFrameRate(DEFAULT_VIDEO_FRAME_RATE);
 		System.out.println("starting video recording at frame rate : " + mVideoCapture.getFrameRate());
-		
 		setState(States.RUNNING);
 		mAudioCaptureScheduler = mExecutor.scheduleAtFixedRate(mAudioCapture, 0, (long) (1000 / mAudioCapture.getFrameRate()), TimeUnit.MILLISECONDS);
 		mVideoCaptureScheduler = mExecutor.scheduleAtFixedRate(mVideoCapture, 0, (long) (1000 / mVideoCapture.getFrameRate()), TimeUnit.MILLISECONDS);
